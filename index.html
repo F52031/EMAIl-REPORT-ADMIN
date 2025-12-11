@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识星球助手 - 管理后台</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <h2>🎛️ 管理后台</h2>
+        </div>
+        <nav class="nav">
+            <a href="#dashboard" class="nav-item active" onclick="showPage('dashboard')">
+                <span class="icon">📊</span>
+                <span>仪表板</span>
+            </a>
+            <a href="#licenses" class="nav-item" onclick="showPage('licenses')">
+                <span class="icon">🔑</span>
+                <span>密钥管理</span>
+            </a>
+            <a href="#devices" class="nav-item" onclick="showPage('devices')">
+                <span class="icon">📱</span>
+                <span>设备管理</span>
+            </a>
+            <a href="#settings" class="nav-item" onclick="showPage('settings')">
+                <span class="icon">⚙️</span>
+                <span>系统设置</span>
+            </a>
+        </nav>
+    </div>
+
+    <div class="main">
+        <div class="topbar">
+            <h1 id="pageTitle">仪表板</h1>
+            <div class="user-info">
+                <span id="apiStatus" class="status-dot"></span>
+                <span>管理员</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div id="message" class="message"></div>
+
+            <!-- 仪表板页面 -->
+            <div id="dashboard-page" class="page active">
+                <div class="stats-grid" id="statsGrid"></div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>最近密钥</h3>
+                        <button class="btn btn-sm" onclick="loadDashboard()">刷新</button>
+                    </div>
+                    <div id="recentLicenses"></div>
+                </div>
+            </div>
+
+            <!-- 密钥管理页面 -->
+            <div id="licenses-page" class="page">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>生成新密钥</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>密钥</label>
+                                <div class="input-group">
+                                    <input type="text" id="newLicense" readonly>
+                                    <button class="btn" onclick="generateNewLicense()">生成</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>客户名称</label>
+                                <input type="text" id="customer" placeholder="输入客户名称" value="星球助手">
+                            </div>
+                            <div class="form-group">
+                                <label>过期时间</label>
+                                <input type="date" id="expireDate" value="2049-12-31">
+                            </div>
+                            <div class="form-group">
+                                <label>最大设备数</label>
+                                <select id="maxDevices">
+                                    <option value="1">1 台</option>
+                                    <option value="2">2 台</option>
+                                    <option value="3">3 台</option>
+                                    <option value="5">5 台</option>
+                                    <option value="10">10 台</option>
+                                    <option value="100" selected>100 台</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="registerLicense()">注册密钥</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>所有密钥</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="searchKeyword" placeholder="搜索密钥或客户名称" style="flex: 1;">
+                            <select id="statusFilter">
+                                <option value="">全部状态</option>
+                                <option value="active">正常</option>
+                                <option value="expired">已过期</option>
+                                <option value="banned">已封禁</option>
+                            </select>
+                            <button class="btn btn-sm" onclick="searchLicenses()">搜索</button>
+                            <button class="btn btn-sm" onclick="loadAllLicenses()">刷新</button>
+                            <button class="btn btn-sm" onclick="exportAllData()">导出数据</button>
+                            <button class="btn btn-sm" onclick="showImportDialog()">导入数据</button>
+                        </div>
+                    </div>
+                    <div id="allLicenses"></div>
+                    <div id="licensesPagination"></div>
+                </div>
+            </div>
+
+            <!-- 设备管理页面 -->
+            <div id="devices-page" class="page">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>查询设备</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>激活码</label>
+                            <div class="input-group">
+                                <input type="text" id="deviceLicense" placeholder="输入要查询的激活码">
+                                <button class="btn btn-primary" onclick="queryDevices()">查询</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="devicesResult"></div>
+            </div>
+
+            <!-- 设置页面 -->
+            <div id="settings-page" class="page">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>API 配置</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>API 地址</label>
+                            <input type="text" id="apiUrl" value="https://1340181402-3thvnndcwl.ap-guangzhou.tencentscf.com">
+                        </div>
+                        <div class="form-group">
+                            <label>管理员密钥</label>
+                            <input type="password" id="adminKey" value="ADMIN-KEY-2025">
+                        </div>
+                        <button class="btn btn-primary" onclick="saveConfig()">保存配置</button>
+                        <button class="btn" onclick="testConnection()">测试连接</button>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3>操作日志</h3>
+                        <button class="btn btn-sm" onclick="loadLogs()">刷新</button>
+                    </div>
+                    <div id="logsContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
