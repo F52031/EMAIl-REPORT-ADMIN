@@ -360,22 +360,19 @@ tr:hover {
 
 /* 移动端响应式设计 */
 @media (max-width: 768px) {
-    body {
-        flex-direction: column;
-    }
-    
     .mobile-menu-btn {
         display: block;
     }
     
     .sidebar {
         position: fixed;
-        left: -250px;
+        left: -100%;
         top: 0;
         bottom: 0;
         width: 250px;
         z-index: 999;
         transition: left 0.3s ease;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.3);
     }
     
     .sidebar.active {
@@ -384,6 +381,7 @@ tr:hover {
     
     .main {
         width: 100%;
+        margin-left: 0;
     }
     
     .topbar {
