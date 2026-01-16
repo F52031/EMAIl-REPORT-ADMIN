@@ -1,30 +1,49 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>知识星球助手 - 管理后台</title>
-    <link rel="stylesheet" href="mobile-admin.css">
+    <link rel="stylesheet" href="admin.css">
 </head>
+
 <body>
+    <!-- 登录遮罩层 -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-box">
+            <h2>🔐 管理后台</h2>
+            <div class="login-form">
+                <input type="password" id="loginPassword" class="input-large" placeholder="请输入管理密码"
+                    onkeypress="if(event.key==='Enter')doLogin()">
+                <button class="btn-large btn-primary" onclick="doLogin()">登录</button>
+            </div>
+            <p id="loginError" class="login-error"></p>
+        </div>
+    </div>
+
     <!-- 顶部导航 -->
     <div class="top-nav">
-        <h1>🎛️ 管理后台</h1>
+        <h1 id="pageTitle">📊 仪表板</h1>
     </div>
 
     <!-- 底部导航栏 -->
     <div class="bottom-nav">
         <div class="nav-item active" onclick="showTab('dashboard')">
             <div class="nav-icon">📊</div>
-            <div class="nav-label">仪表板</div>
+            <div class="nav-label">概览</div>
         </div>
         <div class="nav-item" onclick="showTab('licenses')">
             <div class="nav-icon">🔑</div>
             <div class="nav-label">密钥</div>
         </div>
-        <div class="nav-item" onclick="showTab('devices')">
-            <div class="nav-icon">📱</div>
-            <div class="nav-label">设备</div>
+        <div class="nav-item" onclick="showTab('review')">
+            <div class="nav-icon">✅</div>
+            <div class="nav-label">审核</div>
+        </div>
+        <div class="nav-item" onclick="showTab('logs')">
+            <div class="nav-icon">📋</div>
+            <div class="nav-label">日志</div>
         </div>
         <div class="nav-item" onclick="showTab('settings')">
             <div class="nav-icon">⚙️</div>
@@ -40,11 +59,11 @@
         <!-- 仪表板 -->
         <div id="dashboard" class="tab-content active">
             <div class="stats-container" id="statsContainer"></div>
-            
+
             <div class="section">
                 <div class="section-header">
                     <h2>最近密钥</h2>
-                    <button class="btn-refresh" onclick="loadDashboard()">🔄</button>
+                    <button class="btn-icon" onclick="loadDashboard()">🔄</button>
                 </div>
                 <div id="recentLicenses"></div>
             </div>
@@ -52,79 +71,144 @@
 
         <!-- 密钥管理 -->
         <div id="licenses" class="tab-content">
+            <!-- 生成临时密钥 -->
             <div class="section">
-                <h2>生成新密钥</h2>
+                <h2>🎫 生成临时密钥</h2>
                 <div class="form-box">
-                    <button class="btn-large btn-primary" onclick="generateNewLicense()">🎲 生成密钥</button>
-                    <input type="text" id="newLicense" class="input-large" readonly placeholder="点击上方按钮生成">
+                    <div class="form-row">
+                        <input type="number" id="tempLicenseCount" class="input-large" value="1" min="1" max="50" placeholder="数量">
+                        <button class="btn-large btn-primary" onclick="generateTempLicenses()">生成</button>
+                    </div>
+                    <p class="hint">每个密钥：5次任务、3小时有效期</p>
                 </div>
-                
+                <div id="tempLicensesResult"></div>
+            </div>
+
+            <!-- 生成正式密钥 -->
+            <div class="section">
+                <h2>🔑 注册正式密钥</h2>
                 <div class="form-box">
+                    <button class="btn-large" onclick="generateNewLicense()">🎲 生成密钥</button>
+                    <input type="text" id="newLicense" class="input-large" readonly placeholder="点击上方按钮生成">
+                    
                     <label>客户名称</label>
                     <input type="text" id="customer" class="input-large" value="星球助手">
-                    
+
                     <label>过期时间</label>
                     <input type="date" id="expireDate" class="input-large" value="2049-12-31">
-                    
+
                     <label>最大设备数</label>
                     <select id="maxDevices" class="input-large">
                         <option value="1">1 台</option>
                         <option value="2">2 台</option>
                         <option value="3">3 台</option>
                         <option value="5">5 台</option>
-                        <option value="10">10 台</option>
                         <option value="100" selected>100 台</option>
                     </select>
-                    
+
                     <button class="btn-large btn-success" onclick="registerLicense()">✅ 注册密钥</button>
                 </div>
             </div>
 
+            <!-- 所有密钥 -->
             <div class="section">
                 <div class="section-header">
                     <h2>所有密钥</h2>
-                    <button class="btn-refresh" onclick="loadAllLicenses()">🔄</button>
+                    <button class="btn-icon" onclick="loadAllLicenses()">🔄</button>
                 </div>
                 <div class="search-box">
                     <input type="text" id="searchKeyword" class="input-large" placeholder="搜索密钥或客户">
-                    <button class="btn-large" onclick="searchLicenses()">🔍 搜索</button>
+                    <button class="btn-icon" onclick="searchLicenses()">🔍</button>
                 </div>
                 <div id="allLicenses"></div>
                 <div id="licensesPagination"></div>
             </div>
         </div>
 
-        <!-- 设备管理 -->
-        <div id="devices" class="tab-content">
+        <!-- 激活审核 -->
+        <div id="review" class="tab-content">
             <div class="section">
-                <h2>查询设备</h2>
-                <div class="form-box">
-                    <input type="text" id="deviceLicense" class="input-large" placeholder="输入激活码">
-                    <button class="btn-large btn-primary" onclick="queryDevices()">🔍 查询</button>
+                <div class="section-header">
+                    <h2>⏳ 待审核</h2>
+                    <button class="btn-icon" onclick="loadPendingIPs()">🔄</button>
                 </div>
+                <p class="hint">临时密钥用户，审核通过后可永久使用</p>
+                <div id="pendingIPsContainer"></div>
             </div>
-            <div id="devicesResult"></div>
+
+            <div class="section">
+                <div class="section-header">
+                    <h2>✅ 已通过</h2>
+                    <button class="btn-icon" onclick="loadApprovedIPs()">🔄</button>
+                </div>
+                <div id="approvedIPsContainer"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <h2>🚫 已拒绝</h2>
+                    <button class="btn-icon" onclick="loadRejectedIPs()">🔄</button>
+                </div>
+                <div class="form-row" style="margin-bottom: 12px;">
+                    <input type="text" id="banIPInput" class="input-large" placeholder="输入要封禁的 IP">
+                    <button class="btn-small btn-danger" onclick="manualBanIP()">封禁</button>
+                </div>
+                <div id="rejectedIPsContainer"></div>
+            </div>
+        </div>
+
+        <!-- 操作日志 -->
+        <div id="logs" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <h2>📋 操作日志</h2>
+                    <button class="btn-icon" onclick="loadLogs()">🔄</button>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="logSearchIP" class="input-large" placeholder="搜索 IP 地址">
+                    <button class="btn-icon" onclick="searchLogsByIP()">🔍</button>
+                    <button class="btn-icon" onclick="clearLogSearch()">✖️</button>
+                </div>
+                <div id="logSearchInfo" class="search-info" style="display: none;"></div>
+                <div id="logsContainer"></div>
+                <div id="logsPagination"></div>
+            </div>
         </div>
 
         <!-- 设置 -->
         <div id="settings" class="tab-content">
             <div class="section">
-                <h2>API 配置</h2>
+                <h2>⚙️ API 配置</h2>
                 <div class="form-box">
                     <label>API 地址</label>
-                    <input type="text" id="apiUrl" class="input-large" value="https://1340181402-3thvnndcwl.ap-guangzhou.tencentscf.com">
-                    
+                    <input type="text" id="apiUrl" class="input-large"
+                        value="https://1340181402-3thvnndcwl.ap-guangzhou.tencentscf.com">
+
                     <label>管理员密钥</label>
                     <input type="password" id="adminKey" class="input-large" value="ADMIN-KEY-2025">
-                    
+
                     <button class="btn-large btn-success" onclick="saveConfig()">💾 保存配置</button>
                     <button class="btn-large" onclick="testConnection()">🔌 测试连接</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📦 数据管理</h2>
+                <div class="form-box">
+                    <button class="btn-large" onclick="exportAllData()">📥 导出数据</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>👤 账户</h2>
+                <div class="form-box">
+                    <button class="btn-large btn-danger" onclick="logout()">🚪 退出登录</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script src="admin.js"></script>
-    <script src="mobile-admin.js"></script>
 </body>
+
 </html>
