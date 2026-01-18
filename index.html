@@ -3,8 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>知识星球助手 - 管理后台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>邮件发送助手&报告下载 - 管理后台</title>
     <link rel="stylesheet" href="admin.css">
 </head>
 
@@ -12,197 +12,477 @@
     <!-- 登录遮罩层 -->
     <div id="loginOverlay" class="login-overlay">
         <div class="login-box">
-            <h2>🔐 管理后台</h2>
+            <h2>🔐 管理后台登录</h2>
             <div class="login-form">
-                <input type="password" id="loginPassword" class="input-large" placeholder="请输入管理密码"
+                <input type="password" id="loginPassword" class="form-control" placeholder="请输入管理密码"
                     onkeypress="if(event.key==='Enter')doLogin()">
-                <button class="btn-large btn-primary" onclick="doLogin()">登录</button>
+                <button class="btn btn-primary" onclick="doLogin()">登录</button>
             </div>
             <p id="loginError" class="login-error"></p>
         </div>
     </div>
 
-    <!-- 顶部导航 -->
-    <div class="top-nav">
-        <h1 id="pageTitle">📊 仪表板</h1>
-    </div>
-
-    <!-- 底部导航栏 -->
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="showTab('dashboard')">
-            <div class="nav-icon">📊</div>
-            <div class="nav-label">概览</div>
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <div class="logo">
+            <h1>🎛️ 管理后台</h1>
         </div>
-        <div class="nav-item" onclick="showTab('licenses')">
-            <div class="nav-icon">🔑</div>
-            <div class="nav-label">密钥</div>
-        </div>
-        <div class="nav-item" onclick="showTab('review')">
-            <div class="nav-icon">✅</div>
-            <div class="nav-label">审核</div>
-        </div>
-        <div class="nav-item" onclick="showTab('logs')">
-            <div class="nav-icon">📋</div>
-            <div class="nav-label">日志</div>
-        </div>
-        <div class="nav-item" onclick="showTab('settings')">
-            <div class="nav-icon">⚙️</div>
-            <div class="nav-label">设置</div>
-        </div>
+        <nav class="nav">
+            <a href="#dashboard" class="nav-item active" onclick="showPage('dashboard')">
+                <span class="icon">📊</span>
+                <span>仪表板</span>
+            </a>
+            <a href="#licenses" class="nav-item" onclick="showPage('licenses')">
+                <span class="icon">🔑</span>
+                <span>密钥管理</span>
+            </a>
+            <a href="#devices" class="nav-item" onclick="showPage('devices')">
+                <span class="icon">📱</span>
+                <span>设备管理</span>
+            </a>
+            <a href="#ipManage" class="nav-item" onclick="showPage('ipManage')">
+                <span class="icon">🌐</span>
+                <span>IP 管理</span>
+            </a>
+            <a href="#deviceOverview" class="nav-item" onclick="showPage('deviceOverview')">
+                <span class="icon">🖥️</span>
+                <span>设备总览</span>
+            </a>
+            <a href="#review" class="nav-item" onclick="showPage('review')">
+                <span class="icon">✅</span>
+                <span>激活审核</span>
+            </a>
+            <a href="#logs" class="nav-item" onclick="showPage('logs')">
+                <span class="icon">📋</span>
+                <span>操作日志</span>
+            </a>
+            <a href="#settings" class="nav-item" onclick="showPage('settings')">
+                <span class="icon">⚙️</span>
+                <span>系统设置</span>
+            </a>
+            <a href="#debug" class="nav-item" onclick="showPage('debug')">
+                <span class="icon">🔍</span>
+                <span>密钥调试</span>
+            </a>
+        </nav>
     </div>
 
     <!-- 主内容区 -->
-    <div class="content">
+    <div class="main-content">
+        <!-- 顶部栏 -->
+        <div class="topbar">
+            <h2 id="pageTitle">仪表板</h2>
+            <div class="topbar-actions">
+                <button class="btn btn-sm" onclick="loadCurrentPage()">🔄 刷新</button>
+            </div>
+        </div>
+
         <!-- 消息提示 -->
         <div id="message" class="message"></div>
 
         <!-- 仪表板 -->
-        <div id="dashboard" class="tab-content active">
-            <div class="stats-container" id="statsContainer"></div>
+        <div id="dashboard" class="page active">
+            <div class="stats-grid" id="statsGrid"></div>
 
-            <div class="section">
-                <div class="section-header">
-                    <h2>最近密钥</h2>
-                    <button class="btn-icon" onclick="loadDashboard()">🔄</button>
+            <div class="card">
+                <div class="card-header">
+                    <h3>最近密钥</h3>
                 </div>
-                <div id="recentLicenses"></div>
+                <div class="card-body">
+                    <div id="recentLicenses"></div>
+                </div>
             </div>
         </div>
 
         <!-- 密钥管理 -->
-        <div id="licenses" class="tab-content">
-            <!-- 生成临时密钥 -->
-            <div class="section">
-                <h2>🎫 生成临时密钥</h2>
-                <div class="form-box">
-                    <div class="form-row">
-                        <input type="number" id="tempLicenseCount" class="input-large" value="1" min="1" max="50" placeholder="数量">
-                        <button class="btn-large btn-primary" onclick="generateTempLicenses()">生成</button>
+        <div id="licenses" class="page">
+            <div class="card">
+                <div class="card-header">
+                    <h3>🚀 自动发货密钥 AUTOEMAIL8888（10次任务，12小时）</h3>
+                </div>
+                <div class="card-body">
+                    <p class="hint">💡 此密钥为共享密钥，所有用户使用同一个密钥，无需设备绑定。适合淘宝/闲鱼自动发货。</p>
+                    <div class="form-row" style="margin-top: 15px;">
+                        <input type="text" id="autoDeliveryLicense" class="form-control" value="AUTOEMAIL8888" readonly
+                            style="width: 200px; font-weight: bold; color: #0ea5e9;">
+                        <button class="btn btn-primary" onclick="copyToClipboard('AUTOEMAIL8888')">📋 复制密钥</button>
                     </div>
-                    <p class="hint">每个密钥：5次任务、3小时有效期</p>
-                </div>
-                <div id="tempLicensesResult"></div>
-            </div>
-
-            <!-- 生成正式密钥 -->
-            <div class="section">
-                <h2>🔑 注册正式密钥</h2>
-                <div class="form-box">
-                    <button class="btn-large" onclick="generateNewLicense()">🎲 生成密钥</button>
-                    <input type="text" id="newLicense" class="input-large" readonly placeholder="点击上方按钮生成">
-                    
-                    <label>客户名称</label>
-                    <input type="text" id="customer" class="input-large" value="星球助手">
-
-                    <label>过期时间</label>
-                    <input type="date" id="expireDate" class="input-large" value="2049-12-31">
-
-                    <label>最大设备数</label>
-                    <select id="maxDevices" class="input-large">
-                        <option value="1">1 台</option>
-                        <option value="2">2 台</option>
-                        <option value="3">3 台</option>
-                        <option value="5">5 台</option>
-                        <option value="100" selected>100 台</option>
-                    </select>
-
-                    <button class="btn-large btn-success" onclick="registerLicense()">✅ 注册密钥</button>
+                    <div
+                        style="margin-top: 15px; padding: 15px; background: #e0f2fe; border-radius: 8px; border-left: 4px solid #0ea5e9;">
+                        <p style="margin: 0; color: #0369a1;"><strong>📌 使用说明：</strong></p>
+                        <ul style="margin: 10px 0 0 0; color: #0369a1; padding-left: 20px;">
+                            <li>每个设备最多可激活 <strong>3 次</strong></li>
+                            <li>每次激活有效期 <strong>12 小时</strong></li>
+                            <li>单设备总共可使用 <strong>10 次任务</strong>（所有激活共享）</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
-            <!-- 所有密钥 -->
-            <div class="section">
-                <div class="section-header">
-                    <h2>所有密钥</h2>
-                    <button class="btn-icon" onclick="loadAllLicenses()">🔄</button>
+            <div class="card">
+                <div class="card-header">
+                    <h3>🔑 注册正式密钥（EMAIL-开头）</h3>
                 </div>
-                <div class="search-box">
-                    <input type="text" id="searchKeyword" class="input-large" placeholder="搜索密钥或客户">
-                    <button class="btn-icon" onclick="searchLicenses()">🔍</button>
+                <div class="card-body">
+                    <p class="hint">💡 正式密钥激活后永久有效，无任务次数限制，不需要审核</p>
+                    <div class="form-row">
+                        <button class="btn btn-primary" onclick="generateNewLicense()">🎲 生成密钥</button>
+                        <input type="text" id="newLicense" class="form-control" placeholder="手工输入或点击左侧按钮生成">
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>客户名称</label>
+                            <input type="text" id="customer" class="form-control" placeholder="输入客户名称">
+                        </div>
+
+                        <div class="form-group">
+                            <label>过期时间</label>
+                            <input type="date" id="expireDate" class="form-control" value="2049-12-31">
+                        </div>
+
+                        <div class="form-group">
+                            <label>最大设备数</label>
+                            <select id="maxDevices" class="form-control">
+                                <option value="1">1 台</option>
+                                <option value="2">2 台</option>
+                                <option value="3">3 台</option>
+                                <option value="5">5 台</option>
+                                <option value="10">10 台</option>
+                                <option value="100" selected>100 台</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-success" onclick="registerLicense()">✅ 注册密钥</button>
+                    <p class="hint">💡 正式密钥无任务次数限制，永久有效</p>
                 </div>
-                <div id="allLicenses"></div>
-                <div id="licensesPagination"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>所有密钥</h3>
+                    <div class="card-actions">
+                        <input type="text" id="searchKeyword" class="form-control" placeholder="搜索密钥或客户"
+                            style="width: 300px;">
+                        <button class="btn" onclick="searchLicenses()">🔍 搜索</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="allLicenses"></div>
+                    <div id="licensesPagination"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 设备管理 -->
+        <div id="devices" class="page">
+            <div class="card">
+                <div class="card-header">
+                    <h3>查询设备</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <input type="text" id="deviceLicense" class="form-control" placeholder="输入密钥">
+                        <button class="btn btn-primary" onclick="queryDevices()">🔍 查询</button>
+                    </div>
+                </div>
+            </div>
+            <div id="devicesResult"></div>
+        </div>
+
+        <!-- IP 管理 -->
+        <div id="ipManage" class="page">
+            <div class="card">
+                <div class="card-header">
+                    <h3>🌐 所有 IP 地址</h3>
+                    <div class="card-actions">
+                        <input type="text" id="ipSearchKeyword" class="form-control" placeholder="搜索 IP 地址"
+                            style="width: 200px;">
+                        <button class="btn" onclick="searchIPs()">🔍 搜索</button>
+                        <button class="btn" onclick="loadAllIPs()">🔄 刷新</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="stats-grid" id="ipStatsGrid" style="margin-bottom: 20px;"></div>
+                    <div id="allIPsContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 设备总览 -->
+        <div id="deviceOverview" class="page">
+            <div class="card">
+                <div class="card-header">
+                    <h3>🖥️ 所有设备</h3>
+                    <div class="card-actions">
+                        <input type="text" id="deviceSearchKeyword" class="form-control" placeholder="搜索设备 ID"
+                            style="width: 200px;">
+                        <button class="btn" onclick="searchDevicesGlobal()">🔍 搜索</button>
+                        <button class="btn" onclick="loadAllDevices()">🔄 刷新</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="stats-grid" id="deviceStatsGrid" style="margin-bottom: 20px;"></div>
+                    <div id="allDevicesContainer"></div>
+                </div>
             </div>
         </div>
 
         <!-- 激活审核 -->
-        <div id="review" class="tab-content">
-            <div class="section">
-                <div class="section-header">
-                    <h2>⏳ 待审核</h2>
-                    <button class="btn-icon" onclick="loadPendingIPs()">🔄</button>
+        <div id="review" class="page">
+            <div class="card">
+                <div class="card-header">
+                    <h3>⏳ 待审核激活</h3>
+                    <div class="card-actions">
+                        <button class="btn btn-success" onclick="approveAllIPsAction()">✅ 全部通过</button>
+                        <button class="btn" onclick="loadPendingIPs()">🔄 刷新</button>
+                    </div>
                 </div>
-                <p class="hint">临时密钥用户，审核通过后可永久使用</p>
-                <div id="pendingIPsContainer"></div>
+                <div class="card-body">
+                    <p class="hint">💡 使用临时密钥（AUTOEMAIL8888）的用户会出现在这里，可直接使用12小时/10次任务。审核通过后该IP和设备ID可永久无限制使用插件</p>
+                    <div id="pendingIPsContainer"></div>
+                </div>
             </div>
 
-            <div class="section">
-                <div class="section-header">
-                    <h2>✅ 已通过</h2>
-                    <button class="btn-icon" onclick="loadApprovedIPs()">🔄</button>
+            <div class="card">
+                <div class="card-header">
+                    <h3>✅ 已通过 IP 白名单</h3>
+                    <button class="btn" onclick="loadApprovedIPs()">🔄 刷新</button>
                 </div>
-                <div id="approvedIPsContainer"></div>
+                <div class="card-body">
+                    <div id="approvedIPsContainer"></div>
+                </div>
             </div>
 
-            <div class="section">
-                <div class="section-header">
-                    <h2>🚫 已拒绝</h2>
-                    <button class="btn-icon" onclick="loadRejectedIPs()">🔄</button>
+            <div class="card">
+                <div class="card-header">
+                    <h3>🚫 已拒绝 IP 名单</h3>
+                    <button class="btn" onclick="loadRejectedIPs()">🔄 刷新</button>
                 </div>
-                <div class="form-row" style="margin-bottom: 12px;">
-                    <input type="text" id="banIPInput" class="input-large" placeholder="输入要封禁的 IP">
-                    <button class="btn-small btn-danger" onclick="manualBanIP()">封禁</button>
+                <div class="card-body">
+                    <p class="hint">💡 被拒绝的 IP 无法使用插件，如果误操作可以点击恢复</p>
+
+                    <!-- 手动封禁 IP 输入框 -->
+                    <div class="form-row"
+                        style="margin-bottom: 15px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                        <input type="text" id="banIPInput" class="form-control" placeholder="输入要封禁的 IP 地址"
+                            style="width: 300px; margin-right: 10px;">
+                        <button class="btn btn-danger" onclick="manualBanIP()">🚫 封禁 IP</button>
+                    </div>
+
+                    <div id="rejectedIPsContainer"></div>
                 </div>
-                <div id="rejectedIPsContainer"></div>
             </div>
         </div>
 
         <!-- 操作日志 -->
-        <div id="logs" class="tab-content">
-            <div class="section">
-                <div class="section-header">
-                    <h2>📋 操作日志</h2>
-                    <button class="btn-icon" onclick="loadLogs()">🔄</button>
+        <div id="logs" class="page">
+            <div class="card">
+                <div class="card-header">
+                    <h3>操作日志</h3>
+                    <button class="btn" onclick="loadLogs()">🔄 刷新</button>
                 </div>
-                <div class="search-box">
-                    <input type="text" id="logSearchIP" class="input-large" placeholder="搜索 IP 地址">
-                    <button class="btn-icon" onclick="searchLogsByIP()">🔍</button>
-                    <button class="btn-icon" onclick="clearLogSearch()">✖️</button>
+                <div class="card-body">
+                    <div id="logsContainer"></div>
+                    <div id="logsPagination"></div>
                 </div>
-                <div id="logSearchInfo" class="search-info" style="display: none;"></div>
-                <div id="logsContainer"></div>
-                <div id="logsPagination"></div>
             </div>
         </div>
 
-        <!-- 设置 -->
-        <div id="settings" class="tab-content">
-            <div class="section">
-                <h2>⚙️ API 配置</h2>
-                <div class="form-box">
-                    <label>API 地址</label>
-                    <input type="text" id="apiUrl" class="input-large"
-                        value="https://1340181402-3thvnndcwl.ap-guangzhou.tencentscf.com">
+        <!-- 系统设置 -->
+        <div id="settings" class="page">
+            <div class="card">
+                <div class="card-header">
+                    <h3>API 配置</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>API 地址</label>
+                        <input type="text" id="apiUrl" class="form-control"
+                            value="https://1340181402-bq0pa4ayyf.ap-guangzhou.tencentscf.com">
+                    </div>
 
-                    <label>管理员密钥</label>
-                    <input type="password" id="adminKey" class="input-large" value="ADMIN-KEY-2025">
+                    <div class="form-group">
+                        <label>管理员密钥</label>
+                        <input type="password" id="adminKey" class="form-control" value="ADMIN-KEY-2025">
+                    </div>
 
-                    <button class="btn-large btn-success" onclick="saveConfig()">💾 保存配置</button>
-                    <button class="btn-large" onclick="testConnection()">🔌 测试连接</button>
+                    <div class="form-row">
+                        <button class="btn btn-success" onclick="saveConfig()">💾 保存配置</button>
+                        <button class="btn" onclick="testConnection()">🔌 测试连接</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="section">
-                <h2>📦 数据管理</h2>
-                <div class="form-box">
-                    <button class="btn-large" onclick="exportAllData()">📥 导出数据</button>
+            <div class="card">
+                <div class="card-header">
+                    <h3>数据管理</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <button class="btn" onclick="exportAllData()">📥 导出数据</button>
+                        <button class="btn" onclick="showImportDialog()">📤 导入数据</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="section">
-                <h2>👤 账户</h2>
-                <div class="form-box">
-                    <button class="btn-large btn-danger" onclick="logout()">🚪 退出登录</button>
+            <div class="card">
+                <div class="card-header">
+                    <h3>🚀 版本管理</h3>
+                    <div class="card-actions">
+                        <button class="btn" onclick="checkCurrentVersion()">🔄 刷新</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>当前最新版本</label>
+                        <div id="currentVersionDisplay"
+                            style="padding: 10px; background: #f8f9fa; border-radius: 4px; border: 1px solid #e9ecef; margin-bottom: 20px;">
+                            加载中...
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
+                        <h4 style="margin-bottom: 15px;">发布新版本</h4>
+                        <div class="form-group">
+                            <label>版本号 (如 1.0.1)</label>
+                            <input type="text" id="newVersionInput" class="form-control" placeholder="1.0.0">
+                        </div>
+                        <div class="form-group">
+                            <label>下载链接</label>
+                            <input type="text" id="newDownloadUrlInput" class="form-control" placeholder="https://...">
+                        </div>
+                        <div class="form-group">
+                            <label>更新说明</label>
+                            <textarea id="newUpdateNotesInput" class="form-control" rows="4"
+                                placeholder="请输入更新内容..."></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="publishNewVersion()">📤 发布新版本</button>
+                    </div>
+
+                    <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
+                        <h4 style="margin-bottom: 15px;">📜 历史版本记录</h4>
+                        <div id="versionHistoryContainer">加载中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 密钥调试 -->
+        <div id="debug" class="page">
+            <div class="card">
+                <div class="card-header">
+                    <h3>⚙️ 配置</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>API 地址</label>
+                        <input type="text" id="debugApiUrl" class="form-control"
+                            value="https://1340181402-bq0pa4ayyf.ap-guangzhou.tencentscf.com">
+                    </div>
+                    <div class="form-group">
+                        <label>管理员密钥</label>
+                        <input type="text" id="debugAdminKey" class="form-control" value="ADMIN-KEY-2025">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>🧪 密钥验证测试（随机 IP 和设备ID）</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>测试密钥</label>
+                        <input type="text" id="debugTestLicense" class="form-control"
+                            placeholder="输入密钥，如: EMAIL-0001 或 AUTOEMAIL8888">
+                    </div>
+                    <div id="debugTestInfo" class="test-info"
+                        style="display: none; background: #e2e3e5; padding: 10px; border-radius: 4px; margin: 10px 0;">
+                        <span style="margin-right: 20px;">🌐 <strong>测试IP:</strong> <span
+                                id="debugCurrentIP">-</span></span>
+                        <span>🖥️ <strong>设备ID:</strong> <span id="debugCurrentDevice">-</span></span>
+                    </div>
+                    <div class="form-row" style="margin-top: 15px;">
+                        <button class="btn btn-success" onclick="debugTestValidate()">🔐 测试激活</button>
+                        <button class="btn btn-success" onclick="debugTestStartTask()">▶️ 测试开始任务</button>
+                        <button class="btn btn-primary" onclick="debugTestBoth()">🚀 同时测试</button>
+                        <button class="btn" onclick="debugRegenerateTestData()">🔄 重新生成随机数据</button>
+                    </div>
+                    <div id="debugTestResult" class="debug-result"
+                        style="display:none; background: #f8f9fa; padding: 15px; border-radius: 4px; margin-top: 15px; white-space: pre-wrap; font-family: monospace; font-size: 12px; max-height: 400px; overflow-y: auto;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #28a745;">
+                <div class="card-header">
+                    <h3>🔄 存量用户测试（模拟重装插件）</h3>
+                </div>
+                <div class="card-body">
+                    <p class="hint">测试已有激活记录的用户，使用任意密钥是否能直接通过验证</p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>选择存量IP</label>
+                            <select id="debugExistingIP" class="form-control">
+                                <option value="">-- 点击加载按钮 --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>选择存量设备ID</label>
+                            <select id="debugExistingDevice" class="form-control">
+                                <option value="">-- 点击加载按钮 --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>测试密钥（可以输入任意值）</label>
+                        <input type="text" id="debugExistingTestLicense" class="form-control" value="EMAIL-TEST"
+                            placeholder="输入任意密钥测试">
+                    </div>
+                    <div class="form-row">
+                        <button class="btn" onclick="debugLoadExistingData()">🔄 加载存量数据</button>
+                        <button class="btn btn-success" onclick="debugTestExistingIP()">🌐 测试存量IP（激活）</button>
+                        <button class="btn btn-success" onclick="debugTestExistingIPStartTask()">🌐 测试存量IP（任务）</button>
+                        <button class="btn btn-success" onclick="debugTestExistingDevice()">🖥️ 测试存量设备（激活）</button>
+                        <button class="btn btn-success" onclick="debugTestExistingDeviceStartTask()">🖥️
+                            测试存量设备（任务）</button>
+                        <button class="btn btn-primary" onclick="debugTestExistingBoth()">🚀 综合测试</button>
+                    </div>
+                    <div id="debugExistingResult" class="debug-result"
+                        style="display:none; background: #f8f9fa; padding: 15px; border-radius: 4px; margin-top: 15px; white-space: pre-wrap; font-family: monospace; font-size: 12px; max-height: 400px; overflow-y: auto;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>📋 查看待审核列表</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <button class="btn" onclick="debugListPendingIPs()">🔄 刷新列表</button>
+                        <button class="btn" onclick="debugAnalyzePendingIPs()">📊 分析问题</button>
+                    </div>
+                    <div id="debugPendingResult" class="debug-result"
+                        style="display:none; background: #f8f9fa; padding: 15px; border-radius: 4px; margin-top: 15px; white-space: pre-wrap; font-family: monospace; font-size: 12px; max-height: 400px; overflow-y: auto;">
+                    </div>
+                    <div id="debugAnalysisResult" class="debug-result"
+                        style="display:none; background: #f8f9fa; padding: 15px; border-radius: 4px; margin-top: 15px; white-space: pre-wrap; font-family: monospace; font-size: 12px; max-height: 400px; overflow-y: auto;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>📜 查看日志</h3>
+                </div>
+                <div class="card-body">
+                    <button class="btn" onclick="debugGetLogs()">查看最近50条日志</button>
+                    <div id="debugLogsResult" class="debug-result"
+                        style="display:none; background: #f8f9fa; padding: 15px; border-radius: 4px; margin-top: 15px; white-space: pre-wrap; font-family: monospace; font-size: 12px; max-height: 400px; overflow-y: auto;">
+                    </div>
                 </div>
             </div>
         </div>
