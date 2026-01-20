@@ -96,24 +96,58 @@
 
         <!-- 密钥管理 -->
         <div id="licenses" class="page">
+            <!-- 临时密钥配置卡片 -->
             <div class="card">
                 <div class="card-header">
-                    <h3>🚀 自动发货密钥 AUTOEMAIL8888（10次任务，12小时）</h3>
+                    <h3>🔧 临时密钥配置</h3>
+                    <div class="card-actions">
+                        <button class="btn" onclick="loadTempLicenseConfigInLicensePage()">🔄 刷新</button>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <p class="hint">💡 此密钥为共享密钥，所有用户使用同一个密钥，无需设备绑定。适合淘宝/闲鱼自动发货。</p>
-                    <div class="form-row" style="margin-top: 15px;">
-                        <input type="text" id="autoDeliveryLicense" class="form-control" value="AUTOEMAIL8888" readonly
-                            style="width: 200px; font-weight: bold; color: #0ea5e9;">
-                        <button class="btn btn-primary" onclick="copyToClipboard('AUTOEMAIL8888')">📋 复制密钥</button>
+                    <p class="hint">💡 配置临时密钥的参数，修改后立即生效，旧密钥自动失效</p>
+                    
+                    <div class="form-group">
+                        <label>密钥名称</label>
+                        <div class="form-row">
+                            <input type="text" id="tempLicenseName" class="form-control" placeholder="如: AUTOEMAIL8888" style="flex: 1;">
+                            <button class="btn btn-primary" onclick="copyTempLicenseName()">📋 复制密钥</button>
+                        </div>
+                        <small style="color: #6c757d;">建议使用大写字母和数字组合</small>
                     </div>
-                    <div
-                        style="margin-top: 15px; padding: 15px; background: #e0f2fe; border-radius: 8px; border-left: 4px solid #0ea5e9;">
-                        <p style="margin: 0; color: #0369a1;"><strong>📌 使用说明：</strong></p>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>有效期（小时）</label>
+                            <input type="number" id="tempValidHours" class="form-control" min="1" max="168">
+                            <small style="color: #6c757d;">范围: 1-168 小时</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>最大任务数</label>
+                            <input type="number" id="tempMaxTasks" class="form-control" min="1" max="1000">
+                            <small style="color: #6c757d;">范围: 1-1000 次</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>最大激活次数</label>
+                            <input type="number" id="tempMaxActivations" class="form-control" min="1" max="100">
+                            <small style="color: #6c757d;">范围: 1-100 次</small>
+                        </div>
+                    </div>
+
+                    <div class="form-row" style="margin-top: 15px;">
+                        <button class="btn btn-success" onclick="saveTempLicenseConfigInLicensePage()">💾 保存配置</button>
+                        <button class="btn" onclick="resetTempLicenseConfigInLicensePage()">🔄 恢复默认</button>
+                    </div>
+
+                    <div style="margin-top: 20px; padding: 15px; background: #e7f3ff; border-radius: 8px; border-left: 4px solid #0ea5e9;">
+                        <p style="margin: 0; color: #0369a1;"><strong>📌 配置说明：</strong></p>
                         <ul style="margin: 10px 0 0 0; color: #0369a1; padding-left: 20px;">
-                            <li>每个设备最多可激活 <strong>3 次</strong></li>
-                            <li>每次激活有效期 <strong>12 小时</strong></li>
-                            <li>单设备总共可使用 <strong>10 次任务</strong>（所有激活共享）</li>
+                            <li><strong>密钥名称</strong>：用户输入的密钥（修改后旧密钥立即失效）</li>
+                            <li><strong>有效期</strong>：每次激活后的有效时间</li>
+                            <li><strong>最大任务数</strong>：单个设备总共可使用的任务次数（所有激活共享）</li>
+                            <li><strong>最大激活次数</strong>：单个设备最多可激活的次数</li>
                         </ul>
                     </div>
                 </div>
