@@ -218,7 +218,7 @@ function showPageByName(pageName) {
     const titles = {
         dashboard: '仪表板',
         licenses: '密钥管理',
-        devices: '设备管理',
+        devices: '封禁管理',
         ipManage: 'IP 管理',
         deviceOverview: '设备总览',
         review: '激活审核',
@@ -896,40 +896,46 @@ function showImportDialog() {
 // 加载操作日志
 let currentLogsPage = 1;
 const logsPageSize = 50;
-async function loadLogs(page = 1) {
-    currentLogsPage = page;
+let currentLogSearchKeyword = ''; // 当前搜索关键词
 
-    const logsResult = await apiRequest('getLogs', { page: page, pageSize: logsPageSize });
+async function loadLogs(page = 1, keyword = '') {
+    currentLogsPage = page;
+    currentLogSearchKeyword = keyword;
+
+    const logsResult = await apiRequest('getLogs', { 
+        page: page, 
+        pageSize: logsPageSize,
+        keyword: keyword // 传递搜索关键词
+    });
 
     if (logsResult.success) {
         displayLogs(logsResult.data, logsResult.total || 0);
     }
 }
 
+// 搜索日志
+function searchLogs() {
+    const keyword = document.getElementById('logSearchKeyword').value.trim();
+    loadLogs(1, keyword);
+}
+
+// 清除搜索
+function clearLogSearch() {
+    document.getElementById('logSearchKeyword').value = '';
+    loadLogs(1, '');
+}
+
 // 显示操作日志
 function displayLogs(logs, total) {
     if (!logs || logs.length === 0) {
-        document.getElementById('logsContainer').innerHTML = '<div class="loading">暂无日志</div>';
+        const keyword = currentLogSearchKeyword;
+        const message = keyword ? `未找到包含 "${keyword}" 的日志` : '暂无日志';
+        document.getElementById('logsContainer').innerHTML = `<div class="loading">${message}</div>`;
         document.getElementById('logsPagination').innerHTML = '';
         return;
     }
 
     let html = '<table><thead><tr><th>时间</th><th>操作</th><th>用户名</th><th>密钥</th><th>设备ID</th><th>IP</th></tr></thead><tbody>';
-
-    // 调试：打印第一条日志和缓存内容
-    if (logs.length > 0) {
-        const firstLog = logs[0];
-        console.log('First log entry:', firstLog);
-        console.log('Looking up IP:', firstLog.ip, '-> userName:', getUserNameByIP(firstLog.ip));
-        console.log('Looking up machineId:', firstLog.machineId, '-> userName:', getUserNameByMachineId(firstLog.machineId));
-        console.log('Cache has', globalUserData.ipToInfo.size, 'IPs');
-        // 打印几个缓存的 IP 示例
-        let count = 0;
-        globalUserData.ipToInfo.forEach((info, ip) => {
-            if (count < 3) console.log('  Cache entry:', ip, '->', info.userName);
-            count++;
-        });
-    }
 
     logs.forEach(log => {
         // 设备 ID 显示前 8 位，鼠标悬停显示完整
@@ -942,13 +948,28 @@ function displayLogs(logs, total) {
             userName = `<strong>${userName}</strong>`;
         }
 
+        // 高亮搜索关键词
+        const keyword = currentLogSearchKeyword;
+        let licenseDisplay = log.license || '-';
+        let ipDisplay = log.ip || '-';
+        let userNameDisplay = userName;
+        
+        if (keyword) {
+            const regex = new RegExp(`(${keyword})`, 'gi');
+            licenseDisplay = licenseDisplay.replace(regex, '<mark>$1</mark>');
+            ipDisplay = ipDisplay.replace(regex, '<mark>$1</mark>');
+            if (userName !== '-') {
+                userNameDisplay = userName.replace(regex, '<mark>$1</mark>');
+            }
+        }
+
         html += `<tr>
             <td>${log.timestamp}</td>
             <td>${log.action}</td>
-            <td>${userName}</td>
-            <td><span class="code">${log.license || '-'}</span></td>
+            <td>${userNameDisplay}</td>
+            <td><span class="code">${licenseDisplay}</span></td>
             <td>${log.machineId ? '<span class="code" title="' + machineIdTitle + '">' + machineIdDisplay + '</span>' : '-'}</td>
-            <td><span class="code">${log.ip || '-'}</span></td>
+            <td><span class="code">${ipDisplay}</span></td>
         </tr>`;
     });
     html += '</tbody></table>';
@@ -971,15 +992,16 @@ function displayLogsPagination(total) {
 
     // 上一页按钮
     if (currentLogsPage > 1) {
-        html += `<button class="btn btn-sm" onclick="loadLogs(${currentLogsPage - 1})">上一页</button>`;
+        html += `<button class="btn btn-sm" onclick="loadLogs(${currentLogsPage - 1}, '${currentLogSearchKeyword}')">上一页</button>`;
     }
 
     // 页码信息
-    html += `<span>第 ${currentLogsPage} / ${totalPages} 页 (共 ${total} 条记录)</span>`;
+    const searchInfo = currentLogSearchKeyword ? ` (搜索: "${currentLogSearchKeyword}")` : '';
+    html += `<span>第 ${currentLogsPage} / ${totalPages} 页 (共 ${total} 条记录)${searchInfo}</span>`;
 
     // 下一页按钮
     if (currentLogsPage < totalPages) {
-        html += `<button class="btn btn-sm" onclick="loadLogs(${currentLogsPage + 1})">下一页</button>`;
+        html += `<button class="btn btn-sm" onclick="loadLogs(${currentLogsPage + 1}, '${currentLogSearchKeyword}')">下一页</button>`;
     }
 
     html += '</div>';
@@ -2833,5 +2855,247 @@ window.showPageByName = function(pageName) {
     
     if (pageName === 'licenses') {
         loadTempLicenseConfigInLicensePage(); // 加载临时密钥配置
+    }
+};
+
+
+// ==================== 封禁管理页面 ====================
+
+// 封禁 IP
+async function banIPAction() {
+    const ip = document.getElementById('banIPInput').value.trim();
+    if (!ip) {
+        showMessage('请输入 IP 地址', 'error');
+        return;
+    }
+    
+    if (!confirm(`确定要封禁 IP: ${ip} 吗？\n\n封禁后该 IP 无法使用插件`)) {
+        return;
+    }
+    
+    const result = await apiRequest('rejectIP', { ip });
+    
+    if (result.success) {
+        showMessage('✅ IP 已封禁', 'success');
+        document.getElementById('banIPInput').value = '';
+        loadBannedIPs();
+    } else {
+        showMessage('封禁失败: ' + (result.error || '未知错误'), 'error');
+    }
+}
+
+// 加载已封禁的 IP 列表
+async function loadBannedIPs() {
+    const result = await apiRequest('listRejectedIPs', {});
+    
+    if (result.success && result.data) {
+        const ips = result.data;
+        
+        if (ips.length === 0) {
+            document.getElementById('bannedIPsList').innerHTML = '<p style="color: #6c757d;">暂无封禁的 IP</p>';
+            return;
+        }
+        
+        let html = '<table><thead><tr><th>IP 地址</th><th>操作</th></tr></thead><tbody>';
+        ips.forEach(ip => {
+            html += `<tr>
+                <td><span class="code">${ip}</span></td>
+                <td><button class="btn btn-success btn-sm" onclick="unbanIPAction('${ip}')">✅ 解封</button></td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        document.getElementById('bannedIPsList').innerHTML = html;
+    }
+}
+
+// 解封 IP
+async function unbanIPAction(ip) {
+    if (!confirm(`确定要解封 IP: ${ip} 吗？`)) return;
+    
+    const result = await apiRequest('unrejectIP', { ip });
+    
+    if (result.success) {
+        showMessage('✅ IP 已解封', 'success');
+        loadBannedIPs();
+    } else {
+        showMessage('解封失败: ' + (result.error || '未知错误'), 'error');
+    }
+}
+
+// 封禁密钥（新版本）
+async function banLicenseAction() {
+    const license = document.getElementById('banLicenseInput').value.trim();
+    if (!license) {
+        showMessage('请输入密钥', 'error');
+        return;
+    }
+    
+    if (!confirm(`确定要封禁密钥: ${license} 吗？\n\n封禁后该密钥无法激活`)) {
+        return;
+    }
+    
+    const result = await apiRequest('ban', { license });
+    
+    if (result.success) {
+        showMessage('✅ 密钥已封禁', 'success');
+        document.getElementById('banLicenseInput').value = '';
+        loadBannedLicenses();
+    } else {
+        showMessage('封禁失败: ' + (result.error || '未知错误'), 'error');
+    }
+}
+
+// 加载已封禁的密钥列表
+async function loadBannedLicenses() {
+    const result = await apiRequest('list', { page: 1, pageSize: 1000 });
+    
+    if (result.success && result.data && result.data.licenses) {
+        const bannedLicenses = result.data.licenses.filter(lic => lic.isBanned);
+        
+        if (bannedLicenses.length === 0) {
+            document.getElementById('bannedLicensesList').innerHTML = '<p style="color: #6c757d;">暂无封禁的密钥</p>';
+            return;
+        }
+        
+        let html = '<table><thead><tr><th>密钥</th><th>客户</th><th>操作</th></tr></thead><tbody>';
+        bannedLicenses.forEach(lic => {
+            html += `<tr>
+                <td><span class="code">${lic.license}</span></td>
+                <td>${lic.customer}</td>
+                <td><button class="btn btn-success btn-sm" onclick="unbanLicenseAction('${lic.license}')">✅ 解封</button></td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        document.getElementById('bannedLicensesList').innerHTML = html;
+    }
+}
+
+// 解封密钥
+async function unbanLicenseAction(license) {
+    if (!confirm(`确定要解封密钥: ${license} 吗？`)) return;
+    
+    const result = await apiRequest('unbanLicense', { license });
+    
+    if (result.success) {
+        showMessage('✅ 密钥已解封', 'success');
+        loadBannedLicenses();
+    } else {
+        showMessage('解封失败: ' + (result.error || '未知错误'), 'error');
+    }
+}
+
+// 封禁设备
+async function banDeviceAction() {
+    const license = document.getElementById('banDeviceLicense').value.trim();
+    const machineId = document.getElementById('banDeviceId').value.trim();
+    
+    if (!license || !machineId) {
+        showMessage('请输入密钥和设备 ID', 'error');
+        return;
+    }
+    
+    if (!confirm(`确定要封禁设备吗？\n\n密钥: ${license}\n设备 ID: ${machineId.substring(0, 12)}...`)) {
+        return;
+    }
+    
+    const result = await apiRequest('banDevice', { license, machineId });
+    
+    if (result.success) {
+        showMessage('✅ 设备已封禁', 'success');
+        document.getElementById('banDeviceLicense').value = '';
+        document.getElementById('banDeviceId').value = '';
+        // 如果有查询结果，刷新查询
+        const queryLicense = document.getElementById('queryDeviceLicense').value.trim();
+        if (queryLicense) {
+            queryDevicesForBan();
+        }
+    } else {
+        showMessage('封禁失败: ' + (result.error || '未知错误'), 'error');
+    }
+}
+
+// 查询设备（用于封禁）
+async function queryDevicesForBan() {
+    const license = document.getElementById('queryDeviceLicense').value.trim();
+    if (!license) {
+        showMessage('请输入密钥', 'error');
+        return;
+    }
+    
+    const result = await apiRequest('status', { license });
+    
+    if (result.success && result.data) {
+        displayDevicesForBan(result.data, license);
+    } else {
+        showMessage('查询失败: ' + (result.error || '未知错误'), 'error');
+    }
+}
+
+// 显示设备列表（用于封禁）
+function displayDevicesForBan(data, license) {
+    if (!data.devices || data.devices.length === 0) {
+        document.getElementById('devicesForBanResult').innerHTML = '<p style="color: #6c757d;">该密钥暂无设备使用记录</p>';
+        return;
+    }
+    
+    let html = '<table><thead><tr><th>设备 ID</th><th>首次激活</th><th>最后使用</th><th>最近 IP</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+    data.devices.forEach(device => {
+        const status = device.isBanned ? 
+            '<span class="badge badge-danger">已封禁</span>' : 
+            '<span class="badge badge-success">正常</span>';
+        
+        const action = device.isBanned ?
+            `<button class="btn btn-success btn-sm" onclick="unbanDeviceAction('${license}', '${device.machineId}')">✅ 解封</button>` :
+            `<button class="btn btn-danger btn-sm" onclick="quickBanDevice('${license}', '${device.machineId}')">🚫 封禁</button>`;
+        
+        html += `<tr>
+            <td><span class="code" title="${device.machineId}">${device.machineIdShort}</span></td>
+            <td>${device.firstSeen}</td>
+            <td>${device.lastSeen}</td>
+            <td><span class="code">${device.lastIP || '未知'}</span></td>
+            <td>${status}</td>
+            <td>${action}</td>
+        </tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('devicesForBanResult').innerHTML = html;
+}
+
+// 快速封禁设备（从列表中）
+async function quickBanDevice(license, machineId) {
+    if (!confirm(`确定要封禁设备 ${machineId.substring(0, 12)}... 吗？`)) return;
+    
+    const result = await apiRequest('banDevice', { license, machineId });
+    
+    if (result.success) {
+        showMessage('✅ 设备已封禁', 'success');
+        queryDevicesForBan();
+    } else {
+        showMessage('封禁失败: ' + (result.error || '未知错误'), 'error');
+    }
+}
+
+// 解封设备
+async function unbanDeviceAction(license, machineId) {
+    if (!confirm(`确定要解封设备 ${machineId.substring(0, 12)}... 吗？`)) return;
+    
+    const result = await apiRequest('unbanDevice', { license, machineId });
+    
+    if (result.success) {
+        showMessage('✅ 设备已解封', 'success');
+        queryDevicesForBan();
+    } else {
+        showMessage('解封失败: ' + (result.error || '未知错误'), 'error');
+    }
+}
+
+// 页面加载时初始化封禁管理
+const originalShowPageByName2 = window.showPageByName;
+window.showPageByName = function(pageName) {
+    if (originalShowPageByName2) originalShowPageByName2(pageName);
+    
+    if (pageName === 'devices') {
+        loadBannedIPs();
+        loadBannedLicenses();
     }
 };
