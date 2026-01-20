@@ -1,6 +1,6 @@
 // 配置
 let config = {
-    apiUrl: 'https://1340181402-bq0pa4ayyf.ap-guangzhou.tencentscf.com',
+    apiUrl: 'https://1340181402-3thvnndcwl.ap-guangzhou.tencentscf.com',
     adminKey: 'ADMIN-KEY-2025'
 };
 
@@ -166,8 +166,8 @@ async function initApp() {
     if (saved) {
         const savedConfig = JSON.parse(saved);
         // 如果保存的是旧地址，使用新地址覆盖
-        if (savedConfig.apiUrl && !savedConfig.apiUrl.includes('bq0pa4ayyf')) {
-            config.apiUrl = 'https://1340181402-bq0pa4ayyf.ap-guangzhou.tencentscf.com';
+        if (savedConfig.apiUrl && !savedConfig.apiUrl.includes('tencentscf.com')) {
+            config.apiUrl = 'https://1340181402-3thvnndcwl.ap-guangzhou.tencentscf.com';
             localStorage.setItem('adminConfig', JSON.stringify(config));
         } else {
             config = savedConfig;
@@ -2652,6 +2652,79 @@ async function loadVersionHistory() {
     }
 }
 
+// ==================== 临时密钥配置管理 ====================
+
+// 加载临时密钥配置
+async function loadAutoDeliveryConfig() {
+    const result = await apiRequest('getAutoDeliveryConfig', {});
+    
+    if (result.success && result.data) {
+        const config = result.data;
+        document.getElementById('autoDeliveryLicenseName').value = config.license || 'AUTOEMAIL8888';
+        document.getElementById('autoDeliveryValidHours').value = config.validHours || 12;
+        document.getElementById('autoDeliveryMaxTasks').value = config.maxTasks || 10;
+        document.getElementById('autoDeliveryMaxActivations').value = config.maxActivations || 3;
+        showMessage('配置已加载', 'success');
+    } else {
+        showMessage('加载配置失败: ' + (result.error || '未知错误'), 'error');
+    }
+}
+
+// 保存临时密钥配置
+async function saveAutoDeliveryConfig() {
+    const license = document.getElementById('autoDeliveryLicenseName').value.trim();
+    const validHours = parseInt(document.getElementById('autoDeliveryValidHours').value);
+    const maxTasks = parseInt(document.getElementById('autoDeliveryMaxTasks').value);
+    const maxActivations = parseInt(document.getElementById('autoDeliveryMaxActivations').value);
+    
+    // 验证
+    if (!license) {
+        showMessage('密钥名称不能为空', 'error');
+        return;
+    }
+    if (validHours < 1 || validHours > 168) {
+        showMessage('有效期必须在 1-168 小时之间', 'error');
+        return;
+    }
+    if (maxTasks < 1 || maxTasks > 1000) {
+        showMessage('最大任务数必须在 1-1000 之间', 'error');
+        return;
+    }
+    if (maxActivations < 1 || maxActivations > 100) {
+        showMessage('最大激活次数必须在 1-100 之间', 'error');
+        return;
+    }
+    
+    if (!confirm(`确定要保存临时密钥配置吗？\n\n密钥: ${license}\n有效期: ${validHours} 小时\n最大任务数: ${maxTasks} 次\n最大激活次数: ${maxActivations} 次\n\n修改后立即生效！`)) {
+        return;
+    }
+    
+    const result = await apiRequest('setAutoDeliveryConfig', {
+        license,
+        validHours,
+        maxTasks,
+        maxActivations
+    });
+    
+    if (result.success) {
+        showMessage('✅ 临时密钥配置已保存', 'success');
+    } else {
+        showMessage('保存失败: ' + (result.error || '未知错误'), 'error');
+    }
+}
+
+// 恢复默认配置
+function resetAutoDeliveryConfig() {
+    if (!confirm('确定要恢复默认配置吗？')) return;
+    
+    document.getElementById('autoDeliveryLicenseName').value = 'AUTOEMAIL8888';
+    document.getElementById('autoDeliveryValidHours').value = 12;
+    document.getElementById('autoDeliveryMaxTasks').value = 10;
+    document.getElementById('autoDeliveryMaxActivations').value = 3;
+    
+    showMessage('已恢复默认配置，请点击保存按钮应用', 'success');
+}
+
 // 页面切换监听 (可选，用于自动加载数据)
 const originalShowPage = window.showPage;
 window.showPage = function (pageId) {
@@ -2660,5 +2733,105 @@ window.showPage = function (pageId) {
     if (pageId === 'settings') {
         checkCurrentVersion();
         loadVersionHistory();
+        // 临时密钥配置已移到密钥管理页面，这里不再加载
+    }
+};
+
+
+// ==================== 密钥管理页面的临时密钥配置 ====================
+
+// 加载临时密钥配置（密钥管理页面）
+async function loadTempLicenseConfigInLicensePage() {
+    const result = await apiRequest('getAutoDeliveryConfig', {});
+    
+    if (result.success && result.data) {
+        const config = result.data;
+        
+        // 填充配置表单
+        document.getElementById('tempLicenseName').value = config.license || 'AUTOEMAIL8888';
+        document.getElementById('tempValidHours').value = config.validHours || 12;
+        document.getElementById('tempMaxTasks').value = config.maxTasks || 10;
+        document.getElementById('tempMaxActivations').value = config.maxActivations || 3;
+        
+        showMessage('配置已加载', 'success');
+    } else {
+        showMessage('加载配置失败: ' + (result.error || '未知错误'), 'error');
+    }
+}
+
+// 保存临时密钥配置（密钥管理页面）
+async function saveTempLicenseConfigInLicensePage() {
+    const license = document.getElementById('tempLicenseName').value.trim();
+    const validHours = parseInt(document.getElementById('tempValidHours').value);
+    const maxTasks = parseInt(document.getElementById('tempMaxTasks').value);
+    const maxActivations = parseInt(document.getElementById('tempMaxActivations').value);
+    
+    // 验证
+    if (!license) {
+        showMessage('密钥名称不能为空', 'error');
+        return;
+    }
+    if (validHours < 1 || validHours > 168) {
+        showMessage('有效期必须在 1-168 小时之间', 'error');
+        return;
+    }
+    if (maxTasks < 1 || maxTasks > 1000) {
+        showMessage('最大任务数必须在 1-1000 之间', 'error');
+        return;
+    }
+    if (maxActivations < 1 || maxActivations > 100) {
+        showMessage('最大激活次数必须在 1-100 之间', 'error');
+        return;
+    }
+    
+    if (!confirm(`确定要保存临时密钥配置吗？\n\n密钥: ${license}\n有效期: ${validHours} 小时\n最大任务数: ${maxTasks} 次\n最大激活次数: ${maxActivations} 次\n\n⚠️ 修改后旧密钥立即失效！`)) {
+        return;
+    }
+    
+    const result = await apiRequest('setAutoDeliveryConfig', {
+        license,
+        validHours,
+        maxTasks,
+        maxActivations
+    });
+    
+    if (result.success) {
+        showMessage('✅ 临时密钥配置已保存，旧密钥已失效', 'success');
+        // 重新加载配置
+        loadTempLicenseConfigInLicensePage();
+    } else {
+        showMessage('保存失败: ' + (result.error || '未知错误'), 'error');
+    }
+}
+
+// 恢复默认配置（密钥管理页面）
+function resetTempLicenseConfigInLicensePage() {
+    if (!confirm('确定要恢复默认配置吗？')) return;
+    
+    document.getElementById('tempLicenseName').value = 'AUTOEMAIL8888';
+    document.getElementById('tempValidHours').value = 12;
+    document.getElementById('tempMaxTasks').value = 10;
+    document.getElementById('tempMaxActivations').value = 3;
+    
+    showMessage('已恢复默认配置，请点击保存按钮应用', 'success');
+}
+
+// 复制临时密钥名称
+function copyTempLicenseName() {
+    const license = document.getElementById('tempLicenseName').value.trim();
+    if (!license) {
+        showMessage('密钥名称为空', 'error');
+        return;
+    }
+    copyToClipboard(license);
+}
+
+// 修改页面切换逻辑，加载密钥管理页面时自动加载配置
+const originalShowPageByName = window.showPageByName || showPageByName;
+window.showPageByName = function(pageName) {
+    if (originalShowPageByName) originalShowPageByName(pageName);
+    
+    if (pageName === 'licenses') {
+        loadTempLicenseConfigInLicensePage(); // 加载临时密钥配置
     }
 };
