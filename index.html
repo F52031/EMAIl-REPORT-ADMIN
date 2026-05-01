@@ -159,36 +159,85 @@
                 </div>
                 <div class="card-body">
                     <p class="hint">💡 正式密钥激活后永久有效，无任务次数限制，不需要审核</p>
-                    <div class="form-row">
-                        <button class="btn btn-primary" onclick="generateNewLicense()">🎲 生成密钥</button>
-                        <input type="text" id="newLicense" class="form-control" placeholder="手工输入或点击左侧按钮生成">
+                    
+                    <!-- 单个密钥生成 -->
+                    <div style="border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 15px;">单个密钥生成</h4>
+                        <p class="hint">💡 点击"注册密钥"自动生成并注册，密钥自动复制到剪贴板</p>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>客户名称（选填）</label>
+                                <input type="text" id="customer" class="form-control" placeholder="默认：星球助手">
+                            </div>
+
+                            <div class="form-group">
+                                <label>过期时间</label>
+                                <input type="date" id="expireDate" class="form-control" value="2049-12-31">
+                            </div>
+
+                            <div class="form-group">
+                                <label>最大设备数</label>
+                                <select id="maxDevices" class="form-control">
+                                    <option value="1">1 台</option>
+                                    <option value="2" selected>2 台</option>
+                                    <option value="3">3 台</option>
+                                    <option value="5">5 台</option>
+                                    <option value="10">10 台</option>
+                                    <option value="100">100 台</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-success" onclick="registerSingleLicense()">✅ 注册密钥</button>
+                        
+                        <!-- 生成结果显示区域 -->
+                        <div id="singleLicenseResult" style="margin-top: 20px;"></div>
                     </div>
 
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>客户名称</label>
-                            <input type="text" id="customer" class="form-control" placeholder="输入客户名称">
+                    <!-- 批量密钥生成 -->
+                    <div style="border: 2px solid #0ea5e9; border-radius: 8px; padding: 20px; background: #f0f9ff;">
+                        <h4 style="margin-bottom: 15px; color: #0369a1;">📦 批量生成密钥</h4>
+                        <p class="hint" style="color: #0369a1;">💡 填写信息后点击"批量注册"，自动生成并注册密钥</p>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>生成数量</label>
+                                <input type="number" id="batchCount" class="form-control" value="10" min="1" max="100" placeholder="1-100">
+                            </div>
+
+                            <div class="form-group">
+                                <label>客户名称</label>
+                                <input type="text" id="batchCustomer" class="form-control" placeholder="批量客户名称">
+                            </div>
+
+                            <div class="form-group">
+                                <label>过期时间</label>
+                                <input type="date" id="batchExpireDate" class="form-control" value="2049-12-31">
+                            </div>
+
+                            <div class="form-group">
+                                <label>最大设备数</label>
+                                <select id="batchMaxDevices" class="form-control">
+                                    <option value="1">1 台</option>
+                                    <option value="2" selected>2 台</option>
+                                    <option value="3">3 台</option>
+                                    <option value="5">5 台</option>
+                                    <option value="10">10 台</option>
+                                    <option value="100">100 台</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label>过期时间</label>
-                            <input type="date" id="expireDate" class="form-control" value="2049-12-31">
+                        <div class="form-row">
+                            <button class="btn btn-success" onclick="generateAndRegisterBatchLicenses()">✅ 批量注册</button>
+                            <button class="btn" onclick="exportBatchLicenses()">💾 导出为TXT</button>
+                            <button class="btn" onclick="copyBatchLicenses()">📋 复制全部</button>
                         </div>
 
-                        <div class="form-group">
-                            <label>最大设备数</label>
-                            <select id="maxDevices" class="form-control">
-                                <option value="1">1 台</option>
-                                <option value="2">2 台</option>
-                                <option value="3">3 台</option>
-                                <option value="5">5 台</option>
-                                <option value="10">10 台</option>
-                                <option value="100" selected>100 台</option>
-                            </select>
-                        </div>
+                        <div id="batchLicensesResult" style="margin-top: 20px;"></div>
                     </div>
 
-                    <button class="btn btn-success" onclick="registerLicense()">✅ 注册密钥</button>
                     <p class="hint">💡 正式密钥无任务次数限制，永久有效</p>
                 </div>
             </div>
@@ -197,9 +246,16 @@
                 <div class="card-header">
                     <h3>所有密钥</h3>
                     <div class="card-actions">
+                        <select id="statusFilter" class="form-control" style="width: 120px;">
+                            <option value="">全部状态</option>
+                            <option value="active">正常</option>
+                            <option value="expired">已过期</option>
+                            <option value="banned">已封禁</option>
+                        </select>
                         <input type="text" id="searchKeyword" class="form-control" placeholder="搜索密钥或客户"
                             style="width: 300px;">
                         <button class="btn" onclick="searchLicenses()">🔍 搜索</button>
+                        <button class="btn" onclick="loadAllLicenses()">🔄 刷新</button>
                     </div>
                 </div>
                 <div class="card-body">
