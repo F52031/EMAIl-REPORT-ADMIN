@@ -5,7 +5,7 @@ let config = {
 };
 
 // 管理密码（可以修改为你想要的密码）
-const ADMIN_PASSWORD = 'zsxq2025';
+const ADMIN_PASSWORD = 'Qq112233';
 
 // ==================== 全局用户数据缓存 ====================
 // 用于跨页面统一 IP/设备ID/用户名 的映射
@@ -296,6 +296,252 @@ function generateNewLicense() {
     document.getElementById('newLicense').value = generateLicense();
 }
 
+// 批量生成密钥（存储在全局变量中）
+window.batchGeneratedLicenses = [];
+
+function generateBatchLicenses() {
+    const count = parseInt(document.getElementById('batchCount').value) || 10;
+    
+    if (count < 1 || count > 100) {
+        showMessage('生成数量必须在 1-100 之间', 'error');
+        return;
+    }
+
+    // 生成密钥
+    window.batchGeneratedLicenses = [];
+    for (let i = 0; i < count; i++) {
+        window.batchGeneratedLicenses.push(generateLicense());
+    }
+
+    // 显示结果
+    displayBatchLicenses();
+    showMessage(`成功生成 ${count} 个密钥`, 'success');
+}
+
+// 一键生成并注册（新功能）
+async function generateAndRegisterBatchLicenses() {
+    const count = parseInt(document.getElementById('batchCount').value) || 10;
+    const customer = document.getElementById('batchCustomer').value;
+    const expireDate = document.getElementById('batchExpireDate').value;
+    const maxDevices = parseInt(document.getElementById('batchMaxDevices').value);
+
+    if (count < 1 || count > 100) {
+        showMessage('生成数量必须在 1-100 之间', 'error');
+        return;
+    }
+
+    if (!customer || !expireDate) {
+        showMessage('请填写客户名称和过期时间', 'error');
+        return;
+    }
+
+    if (!confirm(`确定要生成并注册 ${count} 个密钥吗？\n客户：${customer}\n设备数：${maxDevices} 台`)) {
+        return;
+    }
+
+    showMessage('正在生成并注册密钥...', 'success');
+
+    // 1. 生成密钥
+    window.batchGeneratedLicenses = [];
+    for (let i = 0; i < count; i++) {
+        window.batchGeneratedLicenses.push(generateLicense());
+    }
+
+    // 2. 注册密钥
+    const licenses = window.batchGeneratedLicenses.map(license => ({
+        license,
+        customer,
+        expire: new Date(expireDate + ' 23:59:59').getTime(),
+        maxDevices,
+        created: Date.now()
+    }));
+
+    const result = await apiRequest('register', { licenses });
+
+    if (result.success) {
+        showMessage(`成功生成并注册 ${licenses.length} 个密钥！`, 'success');
+        
+        // 显示结果
+        displayBatchLicensesWithSuccess();
+        
+        // 刷新密钥列表
+        loadAllLicenses();
+    } else {
+        showMessage(result.error || '批量注册失败', 'error');
+    }
+}
+
+function displayBatchLicensesWithSuccess() {
+    if (window.batchGeneratedLicenses.length === 0) {
+        return;
+    }
+
+    const customer = document.getElementById('batchCustomer').value || '批量客户';
+    const expireDate = document.getElementById('batchExpireDate').value;
+    const maxDevices = document.getElementById('batchMaxDevices').value;
+
+    let html = `<div style="background: #d4edda; padding: 20px; border-radius: 8px; border: 2px solid #28a745;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h4 style="color: #155724; margin: 0;">✅ 成功生成并注册 ${window.batchGeneratedLicenses.length} 个密钥</h4>
+            <div style="font-size: 12px; color: #155724;">
+                客户: ${customer} | 过期: ${expireDate} | 设备数: ${maxDevices}
+            </div>
+        </div>
+        <div style="max-height: 400px; overflow-y: auto; background: white; padding: 15px; border-radius: 6px;">`;
+
+    window.batchGeneratedLicenses.forEach((license, index) => {
+        html += `<div style="margin: 5px 0; padding: 8px; background: #f8f9fa; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-family: monospace; color: #155724; font-weight: 600;">${index + 1}. ${license}</span>
+            <button class="btn btn-sm" onclick="copyToClipboard('${license}')" style="background: #28a745; color: white;">📋</button>
+        </div>`;
+    });
+
+    html += `</div>
+        <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+            <p style="margin: 0; color: #856404;"><strong>💡 提示：</strong></p>
+            <ul style="margin: 10px 0; color: #856404;">
+                <li>密钥已成功注册到系统，可立即使用</li>
+                <li>点击"导出为TXT"保存密钥文件</li>
+                <li>点击"复制全部"复制所有密钥</li>
+            </ul>
+        </div>
+    </div>`;
+
+    document.getElementById('batchLicensesResult').innerHTML = html;
+}
+
+function displayBatchLicenses() {
+    if (window.batchGeneratedLicenses.length === 0) {
+        document.getElementById('batchLicensesResult').innerHTML = '';
+        return;
+    }
+
+    const customer = document.getElementById('batchCustomer').value || '批量客户';
+    const expireDate = document.getElementById('batchExpireDate').value;
+    const maxDevices = document.getElementById('batchMaxDevices').value;
+
+    let html = `<div style="background: white; padding: 20px; border-radius: 8px; border: 2px solid #0ea5e9;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h4 style="color: #0369a1; margin: 0;">已生成 ${window.batchGeneratedLicenses.length} 个密钥</h4>
+            <div style="font-size: 12px; color: #6c757d;">
+                客户: ${customer} | 过期: ${expireDate} | 设备数: ${maxDevices}
+            </div>
+        </div>
+        <div style="max-height: 400px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 6px;">`;
+
+    window.batchGeneratedLicenses.forEach((license, index) => {
+        html += `<div style="margin: 5px 0; padding: 8px; background: white; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-family: monospace; color: #0369a1; font-weight: 600;">${index + 1}. ${license}</span>
+            <button class="btn btn-sm" onclick="copyToClipboard('${license}')" style="background: #0ea5e9; color: white;">📋</button>
+        </div>`;
+    });
+
+    html += `</div></div>`;
+    document.getElementById('batchLicensesResult').innerHTML = html;
+}
+
+// 批量注册密钥
+async function registerBatchLicenses() {
+    if (!window.batchGeneratedLicenses || window.batchGeneratedLicenses.length === 0) {
+        showMessage('请先生成密钥', 'error');
+        return;
+    }
+
+    const customer = document.getElementById('batchCustomer').value;
+    const expireDate = document.getElementById('batchExpireDate').value;
+    const maxDevices = parseInt(document.getElementById('batchMaxDevices').value);
+
+    if (!customer || !expireDate) {
+        showMessage('请填写客户名称和过期时间', 'error');
+        return;
+    }
+
+    if (!confirm(`确定要注册 ${window.batchGeneratedLicenses.length} 个密钥吗？`)) {
+        return;
+    }
+
+    showMessage('正在批量注册密钥...', 'success');
+
+    const licenses = window.batchGeneratedLicenses.map(license => ({
+        license,
+        customer,
+        expire: new Date(expireDate + ' 23:59:59').getTime(),
+        maxDevices,
+        created: Date.now()
+    }));
+
+    const result = await apiRequest('register', { licenses });
+
+    if (result.success) {
+        showMessage(`成功注册 ${licenses.length} 个密钥！`, 'success');
+        loadAllLicenses();
+        
+        // 更新显示状态
+        let html = `<div style="background: #d4edda; padding: 20px; border-radius: 8px; border: 2px solid #28a745; margin-top: 15px;">
+            <h4 style="color: #155724; margin-bottom: 10px;">✅ 批量注册成功！</h4>
+            <p style="color: #155724; margin: 0;">已成功注册 ${licenses.length} 个密钥到系统</p>
+        </div>`;
+        document.getElementById('batchLicensesResult').innerHTML += html;
+    } else {
+        showMessage(result.error || '批量注册失败', 'error');
+    }
+}
+
+// 复制所有批量生成的密钥
+function copyBatchLicenses() {
+    if (!window.batchGeneratedLicenses || window.batchGeneratedLicenses.length === 0) {
+        showMessage('没有可复制的密钥', 'error');
+        return;
+    }
+
+    const text = window.batchGeneratedLicenses.join('\n');
+    copyToClipboard(text);
+}
+
+// 导出批量密钥到TXT文件
+function exportBatchLicenses() {
+    if (!window.batchGeneratedLicenses || window.batchGeneratedLicenses.length === 0) {
+        showMessage('没有可导出的密钥', 'error');
+        return;
+    }
+
+    const customer = document.getElementById('batchCustomer').value || '批量客户';
+    const expireDate = document.getElementById('batchExpireDate').value;
+    const maxDevices = document.getElementById('batchMaxDevices').value;
+
+    let content = `邮件批量发送助手 - 正式密钥\n`;
+    content += `${'='.repeat(60)}\n\n`;
+    content += `生成时间：${new Date().toLocaleString('zh-CN')}\n`;
+    content += `客户名称：${customer}\n`;
+    content += `过期时间：${expireDate}\n`;
+    content += `最大设备数：${maxDevices} 台\n`;
+    content += `密钥数量：${window.batchGeneratedLicenses.length}\n`;
+    content += `\n${'='.repeat(60)}\n\n`;
+
+    window.batchGeneratedLicenses.forEach((key, index) => {
+        content += `${(index + 1).toString().padStart(3, '0')}. ${key}\n`;
+    });
+
+    content += `\n${'='.repeat(60)}\n`;
+    content += `\n密钥说明：\n`;
+    content += `1. 每个密钥独立使用，互不影响\n`;
+    content += `2. 正式密钥激活后永久有效，无任务次数限制\n`;
+    content += `3. 每个密钥最多可绑定 ${maxDevices} 台设备\n`;
+    content += `4. 密钥过期时间：${expireDate}\n`;
+    content += `5. 如需技术支持，请联系管理员\n`;
+    content += `\n联系方式：微信号 YOLO_SepFive\n`;
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `正式密钥_${customer}_${new Date().getTime()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    showMessage('密钥已导出到文件', 'success');
+}
+
 // 生成临时密钥（使用服务端全局计数器）
 async function generateTempLicenses() {
     const count = parseInt(document.getElementById('tempLicenseCount').value) || 1;
@@ -527,7 +773,89 @@ function displayRecentLicenses(data) {
     document.getElementById('recentLicenses').innerHTML = html;
 }
 
-// 注册密钥
+// 注册单个密钥（自动生成）
+async function registerSingleLicense() {
+    const customer = document.getElementById('customer').value || '星球助手';
+    const expireDate = document.getElementById('expireDate').value;
+    const maxDevices = parseInt(document.getElementById('maxDevices').value);
+
+    if (!expireDate) {
+        showMessage('请选择过期时间', 'error');
+        return;
+    }
+
+    // 自动生成密钥
+    const license = generateLicense();
+
+    const result = await apiRequest('register', {
+        licenses: [{
+            license,
+            customer,
+            expire: new Date(expireDate + ' 23:59:59').getTime(),
+            maxDevices,
+            created: Date.now()
+        }]
+    });
+
+    if (result.success) {
+        showMessage(`✅ 密钥已注册并复制到剪贴板`, 'success');
+        
+        // 复制密钥到剪贴板
+        copyToClipboard(license);
+        
+        // 显示生成结果
+        displaySingleLicenseResult(license, customer, expireDate, maxDevices);
+        
+        // 清空表单
+        document.getElementById('customer').value = '';
+        
+        // 刷新列表
+        loadAllLicenses();
+    } else {
+        showMessage(result.error || '注册失败', 'error');
+    }
+}
+
+// 显示单个密钥生成结果
+function displaySingleLicenseResult(license, customer, expireDate, maxDevices) {
+    const now = new Date().toLocaleString('zh-CN');
+    
+    let html = `<div style="background: #d4edda; padding: 20px; border-radius: 8px; border: 2px solid #28a745; animation: fadeIn 0.3s;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h4 style="color: #155724; margin: 0;">✅ 密钥注册成功</h4>
+            <span style="font-size: 12px; color: #155724;">${now}</span>
+        </div>
+        
+        <div style="background: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+            <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; font-size: 14px;">
+                <div style="color: #6c757d; font-weight: 600;">密钥：</div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-family: monospace; color: #155724; font-weight: 600; font-size: 16px;">${license}</span>
+                    <button class="btn btn-sm" onclick="copyToClipboard('${license}')" style="background: #28a745; color: white;">📋 复制</button>
+                </div>
+                
+                <div style="color: #6c757d; font-weight: 600;">客户名称：</div>
+                <div style="color: #2c3e50;">${customer}</div>
+                
+                <div style="color: #6c757d; font-weight: 600;">过期时间：</div>
+                <div style="color: #2c3e50;">${expireDate}</div>
+                
+                <div style="color: #6c757d; font-weight: 600;">最大设备数：</div>
+                <div style="color: #2c3e50;">${maxDevices} 台</div>
+            </div>
+        </div>
+        
+        <div style="padding: 12px; background: #fff3cd; border-radius: 6px; border-left: 4px solid #ffc107;">
+            <p style="margin: 0; color: #856404; font-size: 13px;">
+                <strong>💡 提示：</strong> 密钥已自动复制到剪贴板，可直接粘贴发送给用户
+            </p>
+        </div>
+    </div>`;
+    
+    document.getElementById('singleLicenseResult').innerHTML = html;
+}
+
+// 注册密钥（旧函数，保留兼容性）
 async function registerLicense() {
     const license = document.getElementById('newLicense').value;
     const customer = document.getElementById('customer').value;
