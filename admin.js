@@ -775,9 +775,13 @@ function displayRecentLicenses(data) {
 
 // 注册单个密钥（自动生成）
 async function registerSingleLicense() {
+    console.log('registerSingleLicense 函数被调用');
+    
     const customer = document.getElementById('customer').value || '星球助手';
     const expireDate = document.getElementById('expireDate').value;
     const maxDevices = parseInt(document.getElementById('maxDevices').value);
+
+    console.log('表单数据:', { customer, expireDate, maxDevices });
 
     if (!expireDate) {
         showMessage('请选择过期时间', 'error');
@@ -786,6 +790,7 @@ async function registerSingleLicense() {
 
     // 自动生成密钥
     const license = generateLicense();
+    console.log('生成的密钥:', license);
 
     const result = await apiRequest('register', {
         licenses: [{
@@ -796,6 +801,8 @@ async function registerSingleLicense() {
             created: Date.now()
         }]
     });
+
+    console.log('API返回结果:', result);
 
     if (result.success) {
         showMessage(`✅ 密钥已注册并复制到剪贴板`, 'success');
